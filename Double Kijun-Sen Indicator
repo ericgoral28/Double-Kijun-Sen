@@ -1,0 +1,53 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © LvNThL
+
+//@version=5
+indicator("Double Kijun-Sen", "DJUN", true)
+
+bool _glow = input.bool(true, "Color Fill?", group = "Switches")
+
+_lookback1 = input.int(26, "Period 1", group = "Settings")
+_lookback2 = input.int(30, "Period 2", group = "Settings")
+
+string typeMA21 = string("SMA")
+
+ma21(source, length, type) =>
+    switch type
+        "SMA" => ta.sma(source, length)
+
+//ARRAY 1
+_highs1 = array.new<float>(0)
+_lows1 = array.new<float>(0)
+
+for i = 0 to _lookback1
+    array.push(_highs1, high[i])
+    array.push(_lows1, low[i])
+array.sort(_highs1, order.descending)
+array.sort(_lows1, order.ascending)
+
+_avghigh1 = array.avg(_highs1)
+_avglow1 = array.avg(_lows1)
+
+//ARRAY 2
+_highs2 = array.new<float>(0)
+_lows2 = array.new<float>(0)
+
+for i = 0 to _lookback2
+    array.push(_highs2, high[i])
+    array.push(_lows2, low[i])
+array.sort(_highs2, order.descending)
+array.sort(_lows2, order.ascending)
+
+_avghigh2 = array.avg(_highs2)
+_avglow2 = array.avg(_lows2)
+
+//MEDIANS
+_median2 = ma21(math.avg(_avghigh1,_avglow1), _lookback1, typeMA21)
+_median3 = ma21(math.avg(_avghigh2,_avglow2), _lookback2, typeMA21)
+
+//DATA PLOTS
+h = plot(_median2, color = close > _median2 and close > _median3 ? color.new(#00ff80, 10) : color.new(#af00ff, 0), linewidth = 1)
+i = plot(_median3, color = close > _median2 and close > _median3 ? color.new(#00ff80, 10) : color.new(#af00ff, 0), linewidth = 1)
+
+//COLOR FILLS
+fill(h, i, _glow ? close > _median2 and close > _median3 ? color.new(#00ff80, 50) : color.new(#af00ff, 50) : na, "Color Fill")
